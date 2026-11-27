@@ -7,9 +7,9 @@ A handheld Raspberry Pi 4 build with a 3D-printed case that every part drops or 
 
 ## Current design (sketch: design/sketch.jpg, 3D mockup: design/handheld-mockup.html)
 - One-piece handheld, not folding. The screen section leans back about 8° from the keyboard section.
-- 7" 1024x600 main screen. Keyboard: Adafruit #922, 152 x 61 x 13 mm, which sets the body width (~180 mm).
+- 7" 1024x600 main screen (Waveshare HDMI LCD (C)). Keyboard: a 9-10" wireless keyboard with touchpad, which makes the body ~10-11" wide.
 - On top: Flipper Zero in a removable cradle (top left), 2" status screen box (Pimoroni Display HAT Mini, top right), antenna (decoration).
-- Right side: a 2" "AI" screen in its own small case.
+- Right side: a 3.5" HDMI "AI" screen (640x480) in its own small case, on the Pi's second HDMI port.
 - Inside: Pi 4 behind the screen with USB ports facing up toward the Flipper, battery (Anker A1259) in a click-in tray beside it, 30 mm 5 V fan, cable channels.
 
 ## Links
@@ -22,8 +22,5 @@ A handheld Raspberry Pi 4 build with a 3D-printed case that every part drops or 
 - Bench-test in stages before designing or printing the case. Measure real parts with calipers.
 
 ## Open decisions
-- Which 7" screen (Waveshare (C) or 52Pi from Micro Center)
-- Which 2" screen for the AI pod (must share GPIO with the Pimoroni HAT)
-- Battery: Anker A1259 tray or GeeekPi UPS Gen 6
-- Power button on GPIO3 (conflicts with I2C)
-- 3D printer access
+- Shopping list: SHOPPING_LIST.md. Battery chosen: Anker A1259. Power: GPIO3 button + inline USB-C switch.
+- Still open: Waveshare (E) vs Newhaven 3.5" AI screen; exact keyboard; 3D printer access; USB power budget check.
