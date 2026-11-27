@@ -1,0 +1,568 @@
+<title>Chrisboii's Mini Handheld</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one big turntable stage (the model), controls under it, a spec sheet beside it on wide screens. */
+:root {
+  --bg: #eef1f6;
+  --surface: #ffffff;
+  --stage: #dde5ef;
+  --fg: #172033;
+  --muted: #56627a;
+  --line: #cfd7e3;
+  --ink: #1e2f8f;        /* the navy marker from the sketch */
+  --accent: #2b8fd0;     /* the light-blue screen colour from the sketch */
+  --accent-soft: #d8ecf8;
+  --font-display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1420; --surface: #171e2d; --stage: #131b2a; --fg: #e6ebf5; --muted: #9aa6bd;
+    --line: #2a3448; --ink: #8fa3ff; --accent: #6cc4ef; --accent-soft: #1b3346; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1420; --surface: #171e2d; --stage: #131b2a; --fg: #e6ebf5; --muted: #9aa6bd;
+  --line: #2a3448; --ink: #8fa3ff; --accent: #6cc4ef; --accent-soft: #1b3346; color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 20px; }
+header { display: grid; gap: 4px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 4.4vw, 42px); line-height: 1.05; margin: 0; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); max-width: 64ch; }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+.viewer { display: grid; gap: 12px; min-width: 0; }
+.stage {
+  position: relative; width: 100%; aspect-ratio: 4 / 3; max-width: 100%; min-height: 360px; max-height: 78vh;
+  background: var(--stage); border: 1.5px solid var(--ink); border-radius: 14px; overflow: hidden;
+}
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.stage canvas:active { cursor: grabbing; }
+.hint { position: absolute; left: 12px; bottom: 10px; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); pointer-events: none; }
+.fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
+
+.tags { position: absolute; inset: 0; pointer-events: none; }
+.tag {
+  position: absolute; left: 0; top: 0; transform: translate(-50%, calc(-100% - 6px));
+  font-family: var(--font-mono); font-size: 11.5px; line-height: 1.25; white-space: nowrap;
+  background: var(--surface); color: var(--fg); border: 1px solid var(--ink); border-radius: 6px; padding: 3px 7px;
+}
+.tag::after {
+  content: ""; position: absolute; left: 50%; bottom: -7px; width: 1px; height: 6px; background: var(--ink);
+}
+.tag.inner { border-style: dashed; color: var(--ink); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.group > .lbl { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; border: 1.5px solid var(--ink); border-radius: 8px; overflow: hidden; }
+.seg button {
+  font: 500 13px var(--font-body); color: var(--fg); background: var(--surface); border: 0; padding: 6px 11px; cursor: pointer;
+}
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.seg button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type="range"] { accent-color: var(--ink); width: 130px; }
+.check { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; cursor: pointer; }
+.check input { accent-color: var(--ink); width: 16px; height: 16px; }
+output { font-family: var(--font-mono); font-size: 13px; min-width: 3ch; font-variant-numeric: tabular-nums; }
+
+aside { display: grid; gap: 16px; min-width: 0; }
+.sheet { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: grid; gap: 10px; }
+.sheet h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin: 0; letter-spacing: .01em; }
+dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; }
+dt { color: var(--muted); font-size: 13.5px; }
+dd { margin: 0; font-family: var(--font-mono); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+ul { margin: 0; padding-left: 18px; display: grid; gap: 7px; font-size: 14px; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+.warn { background: var(--accent-soft); border-radius: 8px; padding: 8px 10px; font-size: 13.5px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Chrisboii's mini laptop · handheld concept · rough 3D mockup</div>
+    <h1>Chrisboii's Mini Handheld</h1>
+    <p>Your sketch turned into a 3D model you can spin around. Drag to rotate, scroll or pinch to zoom. The parts are drawn at roughly their real sizes, and the case is sized around them.</p>
+  </header>
+
+  <div class="layout">
+    <div class="viewer">
+      <div class="stage" id="stage">
+        <div class="tags" id="tags"></div>
+        <div class="hint">drag to rotate · scroll / pinch to zoom</div>
+      </div>
+
+      <div class="controls">
+        <div class="group">
+          <span class="lbl">View</span>
+          <div class="seg" id="views" role="group" aria-label="Camera view">
+            <button type="button" data-view="front" aria-pressed="false">Front</button>
+            <button type="button" data-view="three" aria-pressed="true">3/4</button>
+            <button type="button" data-view="side" aria-pressed="false">Side</button>
+            <button type="button" data-view="back" aria-pressed="false">Back</button>
+          </div>
+        </div>
+        <div class="group">
+          <span class="lbl">Screen</span>
+          <div class="seg" id="sizes" role="group" aria-label="Main screen size">
+            <button type="button" data-size="7" aria-pressed="true">7"</button>
+            <button type="button" data-size="5" aria-pressed="false">5"</button>
+          </div>
+        </div>
+        <div class="group">
+          <label class="lbl" for="tilt">Lean back</label>
+          <input type="range" id="tilt" min="0" max="20" step="1" value="8">
+          <output id="tiltOut" for="tilt">8°</output>
+        </div>
+        <label class="check"><input type="checkbox" id="labels" checked> Labels</label>
+        <label class="check"><input type="checkbox" id="xray"> See inside</label>
+      </div>
+    </div>
+
+    <aside>
+      <section class="sheet">
+        <h2>Rough size</h2>
+        <dl>
+          <dt>Body width</dt><dd id="dWidth">180 mm · 7.1 in</dd>
+          <dt>Width with AI pod</dt><dd id="dPod">–</dd>
+          <dt>Height (body)</dt><dd id="dBody">–</dd>
+          <dt>Height (to top of Flipper)</dt><dd id="dTop">–</dd>
+          <dt>Thickness, keyboard</dt><dd>22 mm · 0.9 in</dd>
+          <dt>Thickness, screen part</dt><dd>40 mm · 1.6 in</dd>
+          <dt>Main screen</dt><dd id="dScreen">7" · 1024×600</dd>
+        </dl>
+        <p class="note">These are estimates for a mockup. Measure your real parts before designing the case.</p>
+      </section>
+
+      <section class="sheet">
+        <h2>Why parts sit where they do</h2>
+        <ul>
+          <li><b>Pi 4 behind the screen</b>, with its USB ports facing up. That keeps the Flipper's cable short.</li>
+          <li><b>Battery next to the Pi</b>, in the thicker screen part. The keyboard part stays thin.</li>
+          <li><b>The keyboard sets the width.</b> It's 6 in wide, so the body can't get much narrower. Try the 5" button to see this.</li>
+          <li><b>Lean back</b> tilts the screen part back from the keyboard. Your sketch's "slight angle" looks best at about 6–10°.</li>
+          <li><b>Two 2" screens</b> (top box and AI pod) each have their own small case. Both would connect to the Pi's GPIO pins with short ribbon cables.</li>
+        </ul>
+        <p class="warn">Before buying the second 2" screen, check that both screens can share the Pi's GPIO pins.</p>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  const stage = document.getElementById('stage');
+  const tagsEl = document.getElementById('tags');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function fail(msg) {
+    const d = document.createElement('div');
+    d.className = 'fallback';
+    d.textContent = msg;
+    stage.appendChild(d);
+  }
+  if (typeof THREE === 'undefined') { fail('The 3D library did not load. Reload the page to try again.'); return; }
+
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+  } catch (e) { fail('This browser cannot show 3D graphics (WebGL is off).'); return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  stage.insertBefore(renderer.domElement, tagsEl);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 4 / 3, 5, 6000);
+
+  function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  function applyTheme() {
+    const c = new THREE.Color(cssVar('--stage') || '#dde5ef');
+    renderer.setClearColor(c, 1);
+    const dark = c.getHSL({}).l < 0.4;
+    edgeMat.color.set(dark ? 0x8fa3ff : 0x1e2f8f);
+  }
+
+  // ---------- dimensions (mm) ----------
+  const W = 180, HL = 84, DL = 22, HU = 142, DU = 40;
+
+  // ---------- materials ----------
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0x1e2f8f });
+  const shellMat = new THREE.MeshStandardMaterial({ color: 0xe4eaf2, roughness: 0.62, metalness: 0.02 });
+  const trimMat = new THREE.MeshStandardMaterial({ color: 0xc9d6e8, roughness: 0.55 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x14181f, roughness: 0.45 });
+  const keyMat = new THREE.MeshStandardMaterial({ color: 0x2b313b, roughness: 0.7 });
+  const padMat = new THREE.MeshStandardMaterial({ color: 0x3a414d, roughness: 0.35 });
+  const accentMat = new THREE.MeshStandardMaterial({ color: 0x2b8fd0, roughness: 0.4 });
+  const flipWhite = new THREE.MeshStandardMaterial({ color: 0xf4f4f2, roughness: 0.55 });
+  const flipOrange = new THREE.MeshStandardMaterial({ color: 0xff8200, roughness: 0.5 });
+  const greyMat = new THREE.MeshStandardMaterial({ color: 0xb7bdc6, roughness: 0.4, metalness: 0.4 });
+  const piMat = new THREE.MeshStandardMaterial({ color: 0x1f7a3a, roughness: 0.6 });
+  const batMat = new THREE.MeshStandardMaterial({ color: 0x30343a, roughness: 0.5 });
+  const shellMats = [shellMat, trimMat];
+
+  function box(w, h, d, mat, parent, x, y, z, edges) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set(x, y, z);
+    m.castShadow = true; m.receiveShadow = true;
+    if (edges) m.add(new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), edgeMat));
+    parent.add(m);
+    return m;
+  }
+  function cyl(r, h, mat, parent, x, y, z) {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 28), mat);
+    m.position.set(x, y, z); m.castShadow = true;
+    parent.add(m);
+    return m;
+  }
+  function anchor(parent, x, y, z) { const o = new THREE.Object3D(); o.position.set(x, y, z); parent.add(o); return o; }
+
+  // ---------- screen textures ----------
+  function canvasTex(w, h, draw) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    const t = new THREE.CanvasTexture(c);
+    t.encoding = THREE.sRGBEncoding;
+    t.anisotropy = 4;
+    const api = { c, ctx, t, draw, redraw(time) { draw(ctx, w, h, time || 0); t.needsUpdate = true; } };
+    api.redraw(0);
+    return api;
+  }
+  function screenMesh(w, h, tex, parent, x, y, z) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex.t, toneMapped: false }));
+    m.position.set(x, y, z);
+    parent.add(m);
+    return m;
+  }
+  function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function clock() { const d = new Date(); return d.getHours() % 12 === 0 ? '12' + ':' + String(d.getMinutes()).padStart(2, '0') : (d.getHours() % 12) + ':' + String(d.getMinutes()).padStart(2, '0'); }
+
+  const mainTex = canvasTex(1024, 600, (g, w, h) => {
+    const bg = g.createLinearGradient(0, 0, w, h); bg.addColorStop(0, '#1e2f8f'); bg.addColorStop(1, '#2b8fd0');
+    g.fillStyle = bg; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#0d1326'; g.fillRect(0, 0, w, 34);
+    g.fillStyle = '#e6ebf5'; g.font = '600 18px sans-serif'; g.textBaseline = 'middle';
+    g.fillText('Raspberry Pi OS', 16, 17);
+    g.textAlign = 'right'; g.fillText(clock(), w - 16, 17); g.textAlign = 'left';
+    // browser window
+    g.fillStyle = '#ffffff'; rr(g, 34, 62, 640, 506, 10); g.fill();
+    g.fillStyle = '#e8edf4'; rr(g, 34, 62, 640, 48, 10); g.fill(); g.fillRect(34, 92, 640, 18);
+    g.fillStyle = '#ffffff'; rr(g, 52, 74, 440, 26, 13); g.fill();
+    g.fillStyle = '#56627a'; g.font = '16px sans-serif'; g.fillText('claude.ai', 70, 87);
+    g.fillStyle = '#172033'; g.font = '600 26px sans-serif'; g.fillText('Mini laptop build', 70, 150);
+    const lines = [[70, 196, 420], [70, 224, 520], [70, 252, 360]];
+    g.fillStyle = '#cfd7e3'; lines.forEach(l => { rr(g, l[0], l[1], l[2], 12, 6); g.fill(); });
+    g.fillStyle = '#d8ecf8'; rr(g, 300, 300, 340, 70, 14); g.fill();
+    g.fillStyle = '#9fb9d6'; rr(g, 320, 320, 260, 10, 5); g.fill(); rr(g, 320, 342, 180, 10, 5); g.fill();
+    g.fillStyle = '#eef1f6'; rr(g, 70, 392, 400, 92, 14); g.fill();
+    g.fillStyle = '#cfd7e3'; rr(g, 90, 414, 330, 10, 5); g.fill(); rr(g, 90, 436, 280, 10, 5); g.fill(); rr(g, 90, 458, 200, 10, 5); g.fill();
+    g.strokeStyle = '#cfd7e3'; g.lineWidth = 2; rr(g, 60, 510, 590, 40, 20); g.stroke();
+    g.fillStyle = '#9aa6bd'; g.font = '16px sans-serif'; g.fillText('Reply…', 82, 530);
+    // qFlipper window
+    g.fillStyle = '#111'; rr(g, 700, 120, 296, 250, 10); g.fill();
+    g.fillStyle = '#ff8200'; g.font = '600 18px monospace'; g.fillText('qFlipper', 718, 146);
+    g.fillStyle = '#ff8c1a'; g.fillRect(724, 168, 248, 124);
+    g.fillStyle = '#111'; g.font = '600 20px monospace'; g.fillText('USB connected', 744, 230);
+    g.fillStyle = '#ff8200'; g.font = '14px monospace'; g.fillText('screen mirror · live', 724, 330);
+  });
+
+  const topTex = canvasTex(320, 240, (g, w, h) => {
+    g.fillStyle = '#05070c'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#e6ebf5'; g.font = '700 74px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(clock(), w / 2, 92);
+    g.fillStyle = '#9aa6bd'; g.font = '500 22px monospace'; g.fillText('CPU 47°C · Wi-Fi ok', w / 2, 158);
+    g.fillStyle = '#6cc4ef'; g.font = '700 24px monospace'; g.fillText('CHRISBOII', w / 2, 206);
+  });
+
+  const aiTex = canvasTex(320, 240, (g, w, h, t) => {
+    g.fillStyle = '#0d1530'; g.fillRect(0, 0, w, h);
+    const p = reduceMotion ? 0.5 : (Math.sin(t / 600) + 1) / 2;
+    g.strokeStyle = 'rgba(108,196,239,' + (0.35 + 0.5 * p) + ')'; g.lineWidth = 6;
+    g.beginPath(); g.arc(w / 2, 100, 56 + p * 8, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = '#e6ebf5'; g.font = '700 64px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('AI', w / 2, 102);
+    g.fillStyle = '#6cc4ef'; g.font = '500 24px sans-serif'; g.fillText('Ask Claude', w / 2, 200);
+  });
+
+  const flipTex = canvasTex(256, 128, (g, w, h) => {
+    g.fillStyle = '#ff8c1a'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#111'; g.font = '700 26px monospace'; g.textBaseline = 'middle';
+    g.fillText('qFlipper', 18, 42); g.font = '600 18px monospace'; g.fillText('USB connected', 18, 88);
+  });
+
+  // ---------- model ----------
+  const device = new THREE.Group(); scene.add(device);
+  const lower = new THREE.Group(); device.add(lower);
+  const upper = new THREE.Group(); upper.position.set(0, HL, 0); device.add(upper);
+  const internals = new THREE.Group(); internals.visible = false; upper.add(internals);
+
+  // lower: keyboard section
+  box(W, HL, DL, shellMat, lower, 0, HL / 2, -DL / 2, true);
+  box(152, 61, 3, keyMat, lower, -8, 42, 0.4, false);
+  const keyGeo = new THREE.BoxGeometry(8.6, 7.8, 2.2);
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 10; c++) {
+      if (r === 0 && c >= 3 && c <= 6) continue;
+      const k = new THREE.Mesh(keyGeo, padMat.clone()); k.material.color.set(0x474f5c);
+      k.position.set(-75 + c * 10.4, 20 + r * 10.2, 2.4); k.castShadow = true; lower.add(k);
+    }
+  }
+  const space = box(40, 7.8, 2.2, padMat, lower, -75 + 4.5 * 10.4, 20, 2.4, false); space.material = new THREE.MeshStandardMaterial({ color: 0x474f5c, roughness: 0.6 });
+  box(30, 28, 1.2, padMat, lower, 50, 52, 2.2, false);               // touchpad
+  box(13, 6, 1.6, keyMat, lower, 42.5, 29, 2.3, false);              // left click
+  box(13, 6, 1.6, keyMat, lower, 57.5, 29, 2.3, false);              // right click
+  const pwr = cyl(5, 3, accentMat, lower, 80, 52, 1.2); pwr.rotation.x = Math.PI / 2;
+  box(1.2, 5.5, 13, darkMat, lower, W / 2 + 0.4, 46, -11, false);   // USB-A
+  box(1.2, 3.5, 9, darkMat, lower, W / 2 + 0.4, 28, -11, false);    // USB-C charge
+
+  // upper: screen section
+  box(W, HU, DU, shellMat, upper, 0, HU / 2, -DU / 2, true);
+  const screenGroup = new THREE.Group(); upper.add(screenGroup);
+  box(120, 6, 1, darkMat, upper, 0, 17, 0.2, false);                 // speaker slot
+  for (let i = 0; i < 11; i++) box(1.5, 4, 1.2, trimMat, upper, -50 + i * 10, 17, 0.4, false);
+
+  function buildScreen(size) {
+    while (screenGroup.children.length) {
+      const c = screenGroup.children.pop();
+      c.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+    }
+    const s = size === 5 ? { bw: 122, bh: 80, aw: 108, ah: 65, cy: 82 } : { bw: 166, bh: 102, aw: 154, ah: 86, cy: 82 };
+    box(s.bw, s.bh, 2, darkMat, screenGroup, 0, s.cy, 0.6, false);
+    screenMesh(s.aw, s.ah, mainTex, screenGroup, 0, s.cy + 1, 1.7);
+  }
+  buildScreen(7);
+
+  // Flipper Zero in a cradle, top left
+  const fg = new THREE.Group(); fg.position.set(-38, HU, -18); fg.rotation.x = -0.12; upper.add(fg);
+  box(108, 14, 34, trimMat, fg, 0, 7, 0, true);
+  box(100, 40, 25, flipWhite, fg, 0, 26, 0, true);
+  box(42, 22, 1, flipOrange, fg, -22, 28, 12.6, false);
+  screenMesh(34, 17, flipTex, fg, -22, 28, 13.2);
+  const dpad = cyl(9, 2, flipWhite, fg, 24, 26, 13); dpad.rotation.x = Math.PI / 2; dpad.material = greyMat;
+  const ok = cyl(3.5, 2.6, flipOrange, fg, 24, 26, 13.4); ok.rotation.x = Math.PI / 2;
+  const back = cyl(3, 2, greyMat, fg, 40, 16, 13); back.rotation.x = Math.PI / 2;
+
+  // 2" status screen box, top right
+  const tg = new THREE.Group(); tg.position.set(52, HU, -18); tg.rotation.x = -0.2; upper.add(tg);
+  box(64, 46, 30, trimMat, tg, 0, 23, 0, true);
+  box(50, 38, 1, darkMat, tg, 0, 24, 15.2, false);
+  screenMesh(41, 31, topTex, tg, 0, 24, 15.8);
+
+  // antenna
+  cyl(5, 6, darkMat, upper, -84, HU + 3, -34);
+  cyl(2.2, 48, darkMat, upper, -84, HU + 28, -34);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(3.6, 20, 14), accentMat); tip.position.set(-84, HU + 53, -34); upper.add(tip);
+
+  // AI pod: small 2" screen in its own case on the right side
+  const pod = new THREE.Group(); pod.position.set(W / 2, HU - 40, -16); upper.add(pod);
+  box(10, 26, 16, trimMat, pod, 5, 0, 0, true);                       // bracket
+  const podInner = new THREE.Group(); podInner.position.set(10, 0, 0); podInner.rotation.y = -0.32; pod.add(podInner);
+  box(56, 46, 24, trimMat, podInner, 28, 0, 0, true);
+  box(50, 38, 1, darkMat, podInner, 28, 0, 12.2, false);
+  screenMesh(41, 31, aiTex, podInner, 28, 0, 12.8);
+
+  // internals (see-inside)
+  box(56, 85, 1.6, piMat, internals, -42, 80, -14, false);
+  box(16, 21, 14, greyMat, internals, -60, 119, -22, false);          // Ethernet
+  box(14, 21, 16, greyMat, internals, -42, 119, -23, false);          // USB 3
+  box(14, 21, 16, greyMat, internals, -24, 119, -23, false);          // USB 2
+  box(5, 51, 8, darkMat, internals, -17, 78, -19, false);             // GPIO header
+  box(16, 16, 8, greyMat, internals, -46, 76, -19, false);            // heatsink
+  box(52, 104, 26, batMat, internals, 38, 70, -26, false);            // battery
+  box(150, 92, 8, new THREE.MeshStandardMaterial({ color: 0x1a7b5a, roughness: 0.6 }), internals, 0, 82, -5, false); // screen driver board
+
+  // floor shadow
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.ShadowMaterial({ opacity: 0.16 }));
+  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+
+  // lights
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a96a8, 0.8));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.75);
+  sun.position.set(260, 520, 380); sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  Object.assign(sun.shadow.camera, { left: -320, right: 320, top: 320, bottom: -320, near: 10, far: 1600 });
+  scene.add(sun);
+  const fill = new THREE.DirectionalLight(0xdfe8ff, 0.3); fill.position.set(-300, 200, -200); scene.add(fill);
+
+  applyTheme();
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+  new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  // ---------- labels ----------
+  const labels = [
+    { a: anchor(upper, -30, 134, 2), text: '7" main screen · 1024×600', key: 'screen' },
+    { a: anchor(fg, 0, 48, 0), text: 'Flipper Zero dock' },
+    { a: anchor(tg, 0, 48, 0), text: '2" status screen' },
+    { a: anchor(podInner, 28, 25, 0), text: '2" AI screen pod' },
+    { a: anchor(lower, -30, 74, 4), text: 'Keyboard + touchpad' },
+    { a: anchor(lower, 80, 58, 3), text: 'Power' },
+    { a: anchor(lower, W / 2 + 1, 50, -11), text: 'USB-A · USB-C' },
+    { a: anchor(upper, -84, HU + 58, -34), text: 'Antenna' },
+    { a: anchor(upper, -42, 60, -30), text: 'Pi 4 (USB up)', inner: true },
+    { a: anchor(upper, 38, 40, -40), text: 'Battery', inner: true }
+  ];
+  labels.forEach(l => {
+    const el = document.createElement('div');
+    el.className = 'tag' + (l.inner ? ' inner' : '');
+    el.textContent = l.text;
+    tagsEl.appendChild(el); l.el = el;
+  });
+
+  // ---------- camera orbit ----------
+  const target = new THREE.Vector3(14, 135, -20);
+  const views = {
+    front: { yaw: 0, pitch: 0.1, dist: 640 },
+    three: { yaw: -0.6, pitch: 0.26, dist: 680 },
+    side: { yaw: -1.5, pitch: 0.12, dist: 640 },
+    back: { yaw: 2.5, pitch: 0.3, dist: 680 }
+  };
+  const cam = Object.assign({}, views.three);
+  const goal = Object.assign({}, views.three);
+  function placeCamera() {
+    camera.position.set(
+      target.x + cam.dist * Math.sin(cam.yaw) * Math.cos(cam.pitch),
+      target.y + cam.dist * Math.sin(cam.pitch),
+      target.z + cam.dist * Math.cos(cam.yaw) * Math.cos(cam.pitch)
+    );
+    camera.lookAt(target);
+  }
+
+  const canvas = renderer.domElement;
+  const pointers = new Map();
+  let pinchStart = 0, distStart = 0;
+  canvas.addEventListener('pointerdown', e => {
+    canvas.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 2) {
+      const [p, q] = [...pointers.values()];
+      pinchStart = Math.hypot(p.x - q.x, p.y - q.y); distStart = goal.dist;
+    }
+    setPressed('views', null);
+  });
+  canvas.addEventListener('pointermove', e => {
+    const prev = pointers.get(e.pointerId); if (!prev) return;
+    const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+    prev.x = e.clientX; prev.y = e.clientY;
+    if (pointers.size === 1) {
+      goal.yaw -= dx * 0.008; goal.pitch = Math.min(1.25, Math.max(-0.15, goal.pitch + dy * 0.006));
+      cam.yaw = goal.yaw; cam.pitch = goal.pitch;
+    } else if (pointers.size === 2) {
+      const [p, q] = [...pointers.values()];
+      const d = Math.hypot(p.x - q.x, p.y - q.y);
+      if (pinchStart > 0) { goal.dist = Math.min(1300, Math.max(320, distStart * pinchStart / d)); cam.dist = goal.dist; }
+    }
+  });
+  function up(e) { pointers.delete(e.pointerId); if (pointers.size < 2) pinchStart = 0; }
+  canvas.addEventListener('pointerup', up);
+  canvas.addEventListener('pointercancel', up);
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    goal.dist = Math.min(1300, Math.max(320, goal.dist * (1 + e.deltaY * 0.001)));
+  }, { passive: false });
+
+  function setPressed(groupId, btn) {
+    document.querySelectorAll('#' + groupId + ' button').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+  }
+  document.getElementById('views').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    Object.assign(goal, views[b.dataset.view]);
+    // take the short way round
+    while (goal.yaw - cam.yaw > Math.PI) goal.yaw -= Math.PI * 2;
+    while (cam.yaw - goal.yaw > Math.PI) goal.yaw += Math.PI * 2;
+    if (reduceMotion) Object.assign(cam, goal);
+    setPressed('views', b);
+  });
+
+  // ---------- controls ----------
+  const tiltEl = document.getElementById('tilt'), tiltOut = document.getElementById('tiltOut');
+  let tilt = 8;
+  const mmIn = mm => Math.round(mm) + ' mm · ' + (mm / 25.4).toFixed(1) + ' in';
+  function updateSizes() {
+    const t = tilt * Math.PI / 180;
+    upper.rotation.x = -t;
+    document.getElementById('dBody').textContent = mmIn(HL + HU * Math.cos(t));
+    document.getElementById('dTop').textContent = mmIn(HL + (HU + 66) * Math.cos(t));
+    document.getElementById('dPod').textContent = mmIn(W + 10 + 56 * Math.cos(0.32) + 24 * Math.sin(0.32) / 2);
+    tiltOut.textContent = tilt + '°';
+  }
+  tiltEl.addEventListener('input', () => { tilt = +tiltEl.value; updateSizes(); });
+  updateSizes();
+
+  document.getElementById('sizes').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const size = +b.dataset.size;
+    buildScreen(size);
+    setPressed('sizes', b);
+    labels[0].el.textContent = size === 5 ? '5" main screen · 800×480' : '7" main screen · 1024×600';
+    document.getElementById('dScreen').textContent = size === 5 ? '5" · 800×480' : '7" · 1024×600';
+  });
+
+  const labelsEl = document.getElementById('labels');
+  labelsEl.addEventListener('change', () => { tagsEl.hidden = !labelsEl.checked; });
+
+  const xrayEl = document.getElementById('xray');
+  function setXray(on) {
+    internals.visible = on;
+    shellMats.concat([flipWhite]).forEach(m => { m.transparent = on; m.opacity = on ? 0.16 : 1; m.depthWrite = !on; m.needsUpdate = true; });
+    labels.forEach(l => { if (l.inner) l.el.hidden = !on; });
+  }
+  xrayEl.addEventListener('change', () => setXray(xrayEl.checked));
+  setXray(false);
+
+  // ---------- resize + loop ----------
+  function resize() {
+    const r = stage.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    renderer.setSize(r.width, r.height, false);
+    camera.aspect = r.width / r.height;
+    camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(resize).observe(stage);
+  resize();
+
+  const v = new THREE.Vector3();
+  let lastClock = '';
+  function frame(time) {
+    const k = reduceMotion ? 1 : 0.12;
+    cam.yaw += (goal.yaw - cam.yaw) * k;
+    cam.pitch += (goal.pitch - cam.pitch) * k;
+    cam.dist += (goal.dist - cam.dist) * k;
+    placeCamera();
+
+    if (!reduceMotion) aiTex.redraw(time);
+    const now = clock();
+    if (now !== lastClock) { lastClock = now; topTex.redraw(); mainTex.redraw(); }
+
+    renderer.render(scene, camera);
+
+    if (!tagsEl.hidden) {
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      labels.forEach(l => {
+        if (l.inner && !internals.visible) return;
+        l.a.getWorldPosition(v); v.project(camera);
+        const off = v.z > 1 || Math.abs(v.x) > 1.1 || Math.abs(v.y) > 1.1;
+        l.el.style.visibility = off ? 'hidden' : 'visible';
+        l.el.style.left = ((v.x + 1) / 2 * w) + 'px';
+        l.el.style.top = ((1 - v.y) / 2 * h) + 'px';
+      });
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
